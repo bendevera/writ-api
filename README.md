@@ -2,12 +2,10 @@
 
 credits for auth starter code - Michael Herman (thank you!)
 
-writer version control.
+literary works version control.
 
 ## TODO
-- setup databases with new names (ensure new models build correctly)
-- get familiar with auth call flow
-- create routes for making works/versions
+- create routes for making versions
 - setup tests for server.works package
 - begin making frontend
 
@@ -33,13 +31,11 @@ $ export SECRET_KEY="change_me"
 
 ### Create DB
 
-Create the databases in `psql`:
+Create the databases with Postgres `createdb` cli tool:
 
 ```sh
-$ psql
-# create database flask_jwt_auth
-# create database flask_jwt_auth_test
-# \q
+$ createdb writ
+$ createdb writ_test
 ```
 
 Create the tables and run the migrations:
