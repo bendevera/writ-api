@@ -5,7 +5,7 @@ import jwt
 import datetime
 
 from project.server import app, db, bcrypt
-
+from sqlalchemy.dialects.postgresql.json import JSONB
 
 class User(db.Model):
     """ User Model for storing user related details """
@@ -16,6 +16,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     registered_on = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
+    works = db.relationship("Work", backref="user")
 
     def __init__(self, email, password, admin=False):
         self.email = email
@@ -32,7 +33,7 @@ class User(db.Model):
         """
         try:
             payload = {
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, seconds=0),
                 'iat': datetime.datetime.utcnow(),
                 'sub': user_id
             }
@@ -63,6 +64,42 @@ class User(db.Model):
         except jwt.InvalidTokenError:
             return 'Invalid token. Please log in again.'
 
+
+class Work(db.Model):
+    """
+    Work Model for storing a piece of literary work.
+    """
+    __tablename__ = 'works'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    created = db.Column(db.Date, default=datetime.datetime.now())
+    last_updated = db.Column(db.Date)
+    versions = db.relationship("Version", backref="work")
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.created = datetime.datetime.now()
+        self.last_updated = self.created
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "created": self.created,
+            "last_updated": self.last_updated,
+            "versions": self.versions
+        }
+
+
+class Version(db.Model):
+    """
+    Version Model for storing every version of a work.
+    """
+    __tablename__ = "versions"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    work_id = db.Column(db.Integer, db.ForeignKey("works.id"))
+    data = db.Column(JSONB)
+    
 
 class BlacklistToken(db.Model):
     """

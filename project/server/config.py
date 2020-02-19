@@ -3,7 +3,7 @@
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 postgres_local_base = 'postgresql://postgres:@localhost/'
-database_name = 'flask_jwt_auth'
+database_name = 'writ'
 
 
 class BaseConfig:
@@ -34,4 +34,4 @@ class ProductionConfig(BaseConfig):
     """Production configuration."""
     SECRET_KEY = 'my_precious'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql:///example'
+    SQLALCHEMY_DATABASE_URI = 'postgresql:///writ'

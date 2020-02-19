@@ -1,18 +1,15 @@
-# Flask JWT Auth
+# writ
 
-[![Build Status](https://travis-ci.org/realpython/flask-jwt-auth.svg?branch=master)](https://travis-ci.org/realpython/flask-jwt-auth)
+credits for auth starter code - Michael Herman (thank you!)
 
-## Want to learn how to build this project?
+writer version control.
 
-Check out the [blog post](https://realpython.com/blog/python/token-based-authentication-with-flask/).
-
-## Want to use this project?
-
-### Basics
-
-1. Fork/Clone
-1. Activate a virtualenv
-1. Install the requirements
+## TODO
+- setup databases with new names (ensure new models build correctly)
+- get familiar with auth call flow
+- create routes for making works/versions
+- setup tests for server.works package
+- begin making frontend
 
 ### Set Environment Variables
 

@@ -13,3 +13,5 @@ __pycache__
 env.sh
 migrations
 *.idea
+.vscode
+.VS_Code
