@@ -3,6 +3,7 @@ from functools import wraps
 
 from project.server import bcrypt, db
 from project.server.models import User, Work, Version, BlacklistToken
+from flask_cors import cross_origin
 
 work_blueprint = Blueprint('work', __name__, url_prefix='/works')
 
@@ -14,6 +15,7 @@ def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
+        print(auth_header)
         if auth_header:
             try:
                 auth_token = auth_header.split(" ")[1]
@@ -60,7 +62,7 @@ def work_index():
             'data': [work.to_json() for work in user.works]
         }
         return make_response(jsonify(responseObject)), 200
-    else:
+    elif request.method == "POST":
         new_work = Work(user_id=request.user_id)
         db.session.add(new_work)
         db.session.commit()
@@ -107,7 +109,7 @@ def versions_by_work__id(work_id):
             'data': [version.to_json() for version in work.versions]
         }
         return make_response(jsonify(responseObject)), 200
-    else:
+    elif request.method == "POST":
         new_version = work.new_version()
         responseObject = {
             'status': 'success',
@@ -152,7 +154,7 @@ def version_by_id(work_id, version_num):
                 'data': version.to_json()
             }
             return make_response(jsonify(responseObject)), 200
-        else:
+        elif request.method == "POST":
             payload = request.get_json()
             try:
                 data = {

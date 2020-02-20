@@ -12,6 +12,9 @@ class BaseConfig:
     DEBUG = False
     BCRYPT_LOG_ROUNDS = 13
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # CORS_SUPPORTS_CREDENTIALS = True
+    # CORS_ALLOW_HEADERS = True
+    # CORS_EXPOSE_HEADERS = True
 
 
 class DevelopmentConfig(BaseConfig):
