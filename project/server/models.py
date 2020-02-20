@@ -6,6 +6,7 @@ import datetime
 
 from project.server import app, db, bcrypt
 from sqlalchemy.dialects.postgresql.json import JSONB
+import json
 
 class User(db.Model):
     """ User Model for storing user related details """
@@ -74,12 +75,37 @@ class Work(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created = db.Column(db.Date, default=datetime.datetime.now())
     last_updated = db.Column(db.Date)
+    newest_version = db.Column(db.Integer)
     versions = db.relationship("Version", backref="work")
 
     def __init__(self, user_id):
         self.user_id = user_id
         self.created = datetime.datetime.now()
         self.last_updated = self.created
+        self.newest_version = 1
+        first_version = Version(
+            work_id=self.id, 
+            number=self.newest_version, 
+            data={"title":"", "text":""}
+        )
+        self.versions = [first_version]
+    
+    def new_version(self):
+        print(self.newest_version)
+        recent = Version.query.filter_by(
+            work_id=self.id, 
+            number=self.newest_version
+        ).first()
+        self.newest_version += 1
+        new = Version(
+            work_id=self.id,
+            data=recent.data,
+            number=self.newest_version
+        )
+        self.versions.append(new)
+        self.last_updated = datetime.datetime.now()
+        db.session.commit()
+        return new
 
     def to_json(self):
         return {
@@ -87,7 +113,7 @@ class Work(db.Model):
             "user_id": self.user_id,
             "created": self.created,
             "last_updated": self.last_updated,
-            "versions": self.versions
+            "versions": [v.to_json() for v in self.versions]
         }
 
 
@@ -98,7 +124,17 @@ class Version(db.Model):
     __tablename__ = "versions"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     work_id = db.Column(db.Integer, db.ForeignKey("works.id"))
+    number = db.Column(db.Integer)
+    color = db.Column(db.String)
     data = db.Column(JSONB)
+
+    def to_json(self):
+        result = self.data
+        result['id'] = self.id
+        result['work_id'] = self.work_id
+        result['number'] = self.number
+        result['color'] = self.color
+        return result
     
 
 class BlacklistToken(db.Model):

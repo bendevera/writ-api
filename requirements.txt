@@ -20,4 +20,4 @@ PyJWT
 python-editor
 six
 SQLAlchemy
-Werkzeug
+Werkzeug==0.16.1

@@ -7,6 +7,10 @@ from project.server.models import User, Work, Version, BlacklistToken
 work_blueprint = Blueprint('work', __name__, url_prefix='/works')
 
 def login_required(f):
+    '''
+    Ensures request includes a valid token before 
+    proceeding with the request.
+    '''
     @wraps(f)
     def wrap(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
@@ -24,17 +28,6 @@ def login_required(f):
         if auth_token:
             resp = User.decode_auth_token(auth_token)
             if not isinstance(resp, str):
-                # user = User.query.filter_by(id=resp).first()
-                # REPLACE responseObject.data with user.works
-                # responseObject = {
-                #     'status': 'success',
-                #     'data': {
-                #         'user_id': user.id,
-                #         'email': user.email,
-                #         'admin': user.admin,
-                #         'registered_on': user.registered_on
-                #     }
-                # }
                 request.user_id = resp
                 return f(*args, **kwargs)
             responseObject = {
@@ -55,6 +48,11 @@ def login_required(f):
 @work_blueprint.route('/', methods=["GET", "POST"])
 @login_required
 def work_index():
+    '''
+    /work
+    GET - Returns ALL Works of the User.
+    POST - Creates a Work and returns it.
+    '''
     if request.method == "GET":
         user = User.query.filter_by(id=request.user_id).first()
         responseObject = {
@@ -73,10 +71,14 @@ def work_index():
         return make_response(jsonify(responseObject)), 200
 
 
-@work_blueprint.route('/<id>')
+@work_blueprint.route('/<work_id>')
 @login_required 
-def work_by_id(id):
-    work = Work.query.filter_by(user_id=request.user_id, id=id).first()
+def work_by_id(work_id):
+    '''
+    /work/<work_id>
+    GET - Returns Work with id == work_id
+    '''
+    work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
     if work is None:
         responseObject = {
             'status': 'fail',
@@ -88,3 +90,85 @@ def work_by_id(id):
         'data': work.to_json()
     }
     return make_response(jsonify(responseObject)), 200
+
+
+@work_blueprint.route('/<work_id>/versions', methods=["GET", "POST"])
+@login_required
+def versions_by_work__id(work_id):
+    '''
+    /work/<work_id>/versions
+    GET - Gets Versions of Work with id == work_id
+    POST - Creates a Version of the Work with a id == work_id
+    '''
+    work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
+    if request.method == "GET":
+        responseObject = {
+            'status': 'success',
+            'data': work.versions
+        }
+        return make_response(jsonify(responseObject)), 200
+    else:
+        new_version = work.new_version()
+        responseObject = {
+            'status': 'success',
+            'data': new_version.to_json()
+        }
+        return make_response(jsonify(responseObject)), 200
+        # payload = request.get_json()
+        # try:
+        #     data = {
+        #         "title": str(payload['title']),
+        #         "text": str(payload['text'])
+        #     }
+        #     new_version = Version(work_id=work.id, data=data)
+        #     work.add_version(new_version)
+        #     db.session.commit()
+        #     responseObject = {
+        #         'status': 'success',
+        #         'data': work.to_json()
+        #     }
+        #     return make_response(jsonify(responseObject)), 200
+        # except:
+        #     responseObject = {
+        #         'status': 'fail',
+        #         'message': 'Version was malformed.'
+        #     }
+        #     return make_response(jsonify(responseObject)), 401
+
+
+@work_blueprint.route('/<work_id>/versions/<version_id>', methods=["GET", "POST"])
+@login_required
+def version_by_id(work_id, version_id):
+    '''
+    /work/<work_id/versions/<version_id
+    GET - Gets Version with id == version_id
+    POST - Updates Version with id == version_id with JSON in request
+    '''
+    version = Version.query.filter_by(user_id=request.user_id, id=version_id).first()
+    if version is not None:
+        if request.method == "GET":
+            responseObject = {
+                'status': 'success',
+                'data': version.to_json()
+            }
+            return make_response(jsonify(responseObject)), 200
+        else:
+            try:
+                data = {
+                    "title": str(payload['title']),
+                    "text": str(payload['text'])
+                }
+                version.data = data
+                db.session.commit()
+                responseObject = {
+                    'status': 'success',
+                    'data': version.to_json()
+                }
+                return make_response(jsonify(responseObject)), 200
+            except:
+                pass
+    responseObject = {
+        'status': 'fail',
+        'data': 'No version with id: {}'.format(version_id)
+    }
+    return make_response(jsonify(responseObject)), 401

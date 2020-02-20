@@ -1,7 +1,4 @@
 # project/tests/test_user_model.py
-
-
-
 import unittest
 
 from project.server import db
