@@ -49,7 +49,7 @@ def login_required(f):
 @login_required
 def work_index():
     '''
-    /work
+    /works
     GET - Returns ALL Works of the User.
     POST - Creates a Work and returns it.
     '''
@@ -57,7 +57,7 @@ def work_index():
         user = User.query.filter_by(id=request.user_id).first()
         responseObject = {
             'status': 'success',
-            'data': user.works
+            'data': [work.to_json() for work in user.works]
         }
         return make_response(jsonify(responseObject)), 200
     else:
@@ -75,7 +75,7 @@ def work_index():
 @login_required 
 def work_by_id(work_id):
     '''
-    /work/<work_id>
+    /works/<work_id>
     GET - Returns Work with id == work_id
     '''
     work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
@@ -96,7 +96,7 @@ def work_by_id(work_id):
 @login_required
 def versions_by_work__id(work_id):
     '''
-    /work/<work_id>/versions
+    /works/<work_id>/versions
     GET - Gets Versions of Work with id == work_id
     POST - Creates a Version of the Work with a id == work_id
     '''
@@ -104,7 +104,7 @@ def versions_by_work__id(work_id):
     if request.method == "GET":
         responseObject = {
             'status': 'success',
-            'data': work.versions
+            'data': [version.to_json() for version in work.versions]
         }
         return make_response(jsonify(responseObject)), 200
     else:
@@ -136,15 +136,15 @@ def versions_by_work__id(work_id):
         #     return make_response(jsonify(responseObject)), 401
 
 
-@work_blueprint.route('/<work_id>/versions/<version_id>', methods=["GET", "POST"])
+@work_blueprint.route('/<work_id>/versions/<version_num>', methods=["GET", "POST"])
 @login_required
-def version_by_id(work_id, version_id):
+def version_by_id(work_id, version_num):
     '''
-    /work/<work_id/versions/<version_id
-    GET - Gets Version with id == version_id
-    POST - Updates Version with id == version_id with JSON in request
+    /works/<work_id/versions/<version_num>
+    GET - Gets Version with number == version_num
+    POST - Updates Version with number == version_num with JSON in request
     '''
-    version = Version.query.filter_by(user_id=request.user_id, id=version_id).first()
+    version = Version.query.filter_by(work_id=work_id, number=version_num).first()
     if version is not None:
         if request.method == "GET":
             responseObject = {
@@ -153,6 +153,7 @@ def version_by_id(work_id, version_id):
             }
             return make_response(jsonify(responseObject)), 200
         else:
+            payload = request.get_json()
             try:
                 data = {
                     "title": str(payload['title']),
@@ -169,6 +170,31 @@ def version_by_id(work_id, version_id):
                 pass
     responseObject = {
         'status': 'fail',
-        'data': 'No version with id: {}'.format(version_id)
+        'data': 'No version with number: {}'.format(version_num)
     }
     return make_response(jsonify(responseObject)), 401
+
+
+@work_blueprint.route('/<work_id>/versions/<version_num>/collapse', methods=["POST"])
+@login_required
+def collapse_versions(work_id, version_num):
+    '''
+    /works/<work_id/versions/collapse/<version_num>
+    POST - Collapses Version where number == version_num and returns all other versions
+    '''
+    try:
+        work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
+        new_versions = work.collapse(version_num)
+        responseObject = {
+            'status': 'success',
+            'data': [version.to_json() for version in new_versions]
+        }
+        return make_response(jsonify(responseObject)), 200
+    except Exception as e:
+        print(e)
+        responseObject = {
+            'status': 'fail',
+            'data': 'Malformed collapse request.'
+        }
+        return make_response(jsonify(responseObject)), 401
+

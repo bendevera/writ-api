@@ -91,21 +91,30 @@ class Work(db.Model):
         self.versions = [first_version]
     
     def new_version(self):
-        print(self.newest_version)
-        recent = Version.query.filter_by(
-            work_id=self.id, 
-            number=self.newest_version
-        ).first()
-        self.newest_version += 1
-        new = Version(
-            work_id=self.id,
-            data=recent.data,
-            number=self.newest_version
-        )
-        self.versions.append(new)
-        self.last_updated = datetime.datetime.now()
+        # might be able to just do self.versions[-1]
+        for version in self.versions:
+            if version.number == self.newest_version:
+                recent = version
+                self.newest_version += 1
+                new = Version(
+                    work_id=self.id,
+                    data=recent.data,
+                    number=self.newest_version
+                )
+                self.versions.append(new)
+                self.last_updated = datetime.datetime.now()
+                db.session.commit()
+                return new
+    
+    def collapse(self, version_num):
+        version_num = int(version_num)
+        for version in self.versions:
+            if version.number == version_num:
+                db.session.delete(version)
+            elif version.number > version_num:
+                version.number -= 1
         db.session.commit()
-        return new
+        return self.versions
 
     def to_json(self):
         return {
