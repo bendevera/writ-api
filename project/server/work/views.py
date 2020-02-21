@@ -14,11 +14,12 @@ def login_required(f):
     '''
     @wraps(f)
     def wrap(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        print(auth_header)
+        # auth_header = request.headers.get('Authorization')
+        auth_header = request.args.get('token')
         if auth_header:
             try:
-                auth_token = auth_header.split(" ")[1]
+                # auth_token = auth_header.split(" ")[1]
+                auth_token = auth_header.strip()
             except IndexError:
                 responseObject = {
                     'status': 'fail',
@@ -199,4 +200,3 @@ def collapse_versions(work_id, version_num):
             'data': 'Malformed collapse request.'
         }
         return make_response(jsonify(responseObject)), 401
-

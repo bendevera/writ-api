@@ -20,7 +20,17 @@ app.config.from_object(app_settings)
 bcrypt = Bcrypt(app)
 db = SQLAlchemy(app)
 
+# from project.server.react.views import react_blueprint
+# app.register_blueprint(react_blueprint)
 from project.server.auth.views import auth_blueprint
 app.register_blueprint(auth_blueprint)
 from project.server.work.views import work_blueprint
 app.register_blueprint(work_blueprint)
+
+# CORS(
+#     app,
+#     origins='*', 
+#     headers=['Content-Type', 'Authorization'], 
+#     expose_headers='Authorization',
+#     supports_credentials=True
+# )
