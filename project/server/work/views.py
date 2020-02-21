@@ -1,11 +1,12 @@
 from flask import Blueprint, request, make_response, jsonify
+from flask.views import MethodView
 from functools import wraps
 
 from project.server import bcrypt, db
 from project.server.models import User, Work, Version, BlacklistToken
 from flask_cors import cross_origin
 
-work_blueprint = Blueprint('work', __name__, url_prefix='/works')
+work_blueprint = Blueprint('work', __name__)
 
 def login_required(f):
     '''
@@ -15,6 +16,10 @@ def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         # auth_header = request.headers.get('Authorization')
+        # if request.method == "POST":
+        #     auth_header = request.get_json()['token']
+        # else:
+        #     auth_header = request.args.get('token')
         auth_header = request.args.get('token')
         if auth_header:
             try:
@@ -47,23 +52,22 @@ def login_required(f):
     
     return wrap
 
+class WorksResource(MethodView):
+    """
+    Works Resource
+    """
 
-@work_blueprint.route('/', methods=["GET", "POST"])
-@login_required
-def work_index():
-    '''
-    /works
-    GET - Returns ALL Works of the User.
-    POST - Creates a Work and returns it.
-    '''
-    if request.method == "GET":
+    @login_required
+    def get(self):
         user = User.query.filter_by(id=request.user_id).first()
         responseObject = {
             'status': 'success',
             'data': [work.to_json() for work in user.works]
         }
         return make_response(jsonify(responseObject)), 200
-    elif request.method == "POST":
+
+    @login_required
+    def post(self):
         new_work = Work(user_id=request.user_id)
         db.session.add(new_work)
         db.session.commit()
@@ -73,8 +77,48 @@ def work_index():
         }
         return make_response(jsonify(responseObject)), 200
 
+# define the API resources
+works_view = WorksResource.as_view('works_api')
 
-@work_blueprint.route('/<work_id>')
+# add Rules for API Endpoints
+work_blueprint.add_url_rule(
+    '/works',
+    view_func=works_view,
+    methods=['GET', 'POST']
+)
+# @work_blueprint.route('/', methods=["GET"])
+# @login_required
+# def get_works():
+#     '''
+#     /works
+#     GET - Returns ALL Works of the User.
+#     '''
+#     user = User.query.filter_by(id=request.user_id).first()
+#     responseObject = {
+#         'status': 'success',
+#         'data': [work.to_json() for work in user.works]
+#     }
+#     return make_response(jsonify(responseObject)), 200
+
+
+# @work_blueprint.route('/', methods=["POST"])
+# @login_required
+# def make_work():
+#     '''
+#     /works
+#     POST - Creates a Work and returns it.
+#     '''
+#     new_work = Work(user_id=request.user_id)
+#     db.session.add(new_work)
+#     db.session.commit()
+#     responseObject = {
+#         'status': 'success',
+#         'data': new_work.to_json()
+#     }
+#     return make_response(jsonify(responseObject)), 200
+
+
+@work_blueprint.route('/works/<work_id>')
 @login_required 
 def work_by_id(work_id):
     '''
@@ -95,7 +139,7 @@ def work_by_id(work_id):
     return make_response(jsonify(responseObject)), 200
 
 
-@work_blueprint.route('/<work_id>/versions', methods=["GET", "POST"])
+@work_blueprint.route('/works/<work_id>/versions', methods=["GET", "POST"])
 @login_required
 def versions_by_work__id(work_id):
     '''
@@ -139,7 +183,7 @@ def versions_by_work__id(work_id):
         #     return make_response(jsonify(responseObject)), 401
 
 
-@work_blueprint.route('/<work_id>/versions/<version_num>', methods=["GET", "POST"])
+@work_blueprint.route('/works/<work_id>/versions/<version_num>', methods=["GET", "POST"])
 @login_required
 def version_by_id(work_id, version_num):
     '''
@@ -178,7 +222,7 @@ def version_by_id(work_id, version_num):
     return make_response(jsonify(responseObject)), 401
 
 
-@work_blueprint.route('/<work_id>/versions/<version_num>/collapse', methods=["POST"])
+@work_blueprint.route('/works/<work_id>/versions/<version_num>/collapse', methods=["POST"])
 @login_required
 def collapse_versions(work_id, version_num):
     '''

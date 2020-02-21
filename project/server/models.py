@@ -73,6 +73,7 @@ class Work(db.Model):
     __tablename__ = 'works'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    title = db.Column(db.String)
     created = db.Column(db.Date, default=datetime.datetime.now())
     last_updated = db.Column(db.Date)
     newest_version = db.Column(db.Integer)
@@ -80,13 +81,14 @@ class Work(db.Model):
 
     def __init__(self, user_id):
         self.user_id = user_id
+        self.title = "Untitled"
         self.created = datetime.datetime.now()
         self.last_updated = self.created
         self.newest_version = 1
         first_version = Version(
             work_id=self.id, 
             number=self.newest_version, 
-            data={"title":"", "text":""}
+            data={"text":""}
         )
         self.versions = [first_version]
     
@@ -119,9 +121,11 @@ class Work(db.Model):
     def to_json(self):
         return {
             "id": self.id,
+            "title": self.title,
             "user_id": self.user_id,
             "created": self.created,
             "last_updated": self.last_updated,
+            "newest_version": self.newest_version,
             "versions": [v.to_json() for v in self.versions]
         }
 
