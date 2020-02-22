@@ -101,14 +101,24 @@ class VersionsAPI(MethodView):
     
     @login_required
     def post(self, work_id):
-        print("POST TO VERSIONS")
+        payload = request.get_json()
         work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
-        new_version = work.new_version()
-        responseObject = {
-            'status': 'success',
-            'data': new_version.to_json()
-        }
-        return make_response(jsonify(responseObject)), 200
+        try:
+            new_version = work.new_version(payload['number'])
+            responseObject = {
+                'status': 'success',
+                'data': new_version.to_json()
+            }
+            return make_response(jsonify(responseObject)), 200
+        except Exception as e:
+            print("ERROR MAKING VERSION")
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'data': 'Failed attempt. Please try again.'
+            }
+            return make_response(jsonify(responseObject)), 404
+
 
 
 class VersionAPI(MethodView):
@@ -132,16 +142,22 @@ class VersionAPI(MethodView):
             'status': 'fail',
             'data': 'No version with number: {}'.format(version_num)
         }
-        return make_response(jsonify(responseObject)), 401
+        return make_response(jsonify(responseObject)), 404
     
     @login_required
     def post(self, work_id, version_num):
-        version = Version.query.filter_by(work_id=work_id, number=version_num).first()
+        work = Work.query.filter_by(id=work_id).first()
+        version = None
+        for vers in work.versions:
+            if vers.number == int(version_num):
+                version = vers
+        # version = Version.query.filter_by(work_id=work_id, number=version_num).first()
         if version is not None:
             payload = request.get_json()
             try:
                 # DO I SEND THE WORK TITLE EACH TIME OR CREATE 
                 # NEW UPDATE ROUTE FOR WORK TO CHANGE TITLE?
+                work.title = str(payload['title'])
                 data = {
                     "text": str(payload['text'])
                 }
@@ -158,7 +174,27 @@ class VersionAPI(MethodView):
             'status': 'fail',
             'data': 'No version with number: {}'.format(version_num)
         }
-        return make_response(jsonify(responseObject)), 401
+        return make_response(jsonify(responseObject)), 404
+    
+    @login_required
+    def delete(self, work_id, version_num):
+        try:
+            work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
+            print(work.versions)
+            work.collapse(int(version_num))
+            print(work.versions)
+            responseObject = {
+                'status': 'success',
+                'data': 'success'
+            }
+            return make_response(jsonify(responseObject)), 200
+        except Exception as e:
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'data': 'Malformed collapse request.'
+            }
+            return make_response(jsonify(responseObject)), 401
 
 # define the APIs
 works_view = WorksAPI.as_view('works_api')
@@ -179,7 +215,7 @@ work_blueprint.add_url_rule(
 work_blueprint.add_url_rule(
     '/works/<work_id>/versions/<version_num>',
     view_func=version_view,
-    methods=['GET', 'POST']
+    methods=['GET', 'POST', 'DELETE']
 )
 # @work_blueprint.route('/', methods=["GET"])
 # @login_required
@@ -297,25 +333,25 @@ work_blueprint.add_url_rule(
 #     return make_response(jsonify(responseObject)), 401
 
 
-@work_blueprint.route('/works/<work_id>/versions/<version_num>/collapse', methods=["POST"])
-@login_required
-def collapse_versions(work_id, version_num):
-    '''
-    /works/<work_id/versions/collapse/<version_num>
-    POST - Collapses Version where number == version_num and returns all other versions
-    '''
-    try:
-        work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
-        new_versions = work.collapse(version_num)
-        responseObject = {
-            'status': 'success',
-            'data': [version.to_json() for version in new_versions]
-        }
-        return make_response(jsonify(responseObject)), 200
-    except Exception as e:
-        print(e)
-        responseObject = {
-            'status': 'fail',
-            'data': 'Malformed collapse request.'
-        }
-        return make_response(jsonify(responseObject)), 401
+# @work_blueprint.route('/works/<work_id>/versions/<version_num>/collapse', methods=["POST"])
+# @login_required
+# def collapse_versions(work_id, version_num):
+#     '''
+#     /works/<work_id/versions/collapse/<version_num>
+#     POST - Collapses Version where number == version_num and returns all other versions
+#     '''
+#     try:
+#         work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
+#         new_versions = work.collapse(version_num)
+#         responseObject = {
+#             'status': 'success',
+#             'data': [version.to_json() for version in new_versions]
+#         }
+#         return make_response(jsonify(responseObject)), 200
+#     except Exception as e:
+#         print(e)
+#         responseObject = {
+#             'status': 'fail',
+#             'data': 'Malformed collapse request.'
+#         }
+#         return make_response(jsonify(responseObject)), 401

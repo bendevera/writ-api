@@ -92,10 +92,10 @@ class Work(db.Model):
         )
         self.versions = [first_version]
     
-    def new_version(self):
+    def new_version(self, number=newest_version):
         # might be able to just do self.versions[-1]
         for version in self.versions:
-            if version.number == self.newest_version:
+            if version.number == number:
                 recent = version
                 self.newest_version += 1
                 new = Version(
@@ -115,16 +115,17 @@ class Work(db.Model):
                 db.session.delete(version)
             elif version.number > version_num:
                 version.number -= 1
+        self.newest_version -= 1
+        self.last_updated = datetime.datetime.now()
         db.session.commit()
-        return self.versions
 
     def to_json(self):
         return {
             "id": self.id,
             "title": self.title,
             "user_id": self.user_id,
-            "created": self.created,
-            "last_updated": self.last_updated,
+            "created": self.created.strftime("%b %d, %Y"),
+            "last_updated": self.last_updated.strftime("%b %d, %Y"),
             "newest_version": self.newest_version,
             "versions": [v.to_json() for v in self.versions]
         }
