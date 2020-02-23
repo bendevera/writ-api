@@ -4,10 +4,6 @@ credits for auth starter code - Michael Herman (thank you!)
 
 literary works version control.
 
-## TODO
-- create routes for making versions
-- setup tests for server.works package
-- begin making frontend
 
 ### Set Environment Variables
 

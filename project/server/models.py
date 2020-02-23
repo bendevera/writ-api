@@ -92,8 +92,7 @@ class Work(db.Model):
         )
         self.versions = [first_version]
     
-    def new_version(self, number=newest_version):
-        # might be able to just do self.versions[-1]
+    def new_version(self, number=1):
         for version in self.versions:
             if version.number == number:
                 recent = version

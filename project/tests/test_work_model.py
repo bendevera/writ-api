@@ -20,7 +20,7 @@ class TestUserModel(BaseTestCase):
         )
         db.session.add(work)
         db.session.commit()
-        self.assertEqual(work.versions[0].data['title'], "")
+        self.assertEqual(work.title, "Untitled")
     
     def test_two_versions(self):
         user = User(
@@ -32,12 +32,11 @@ class TestUserModel(BaseTestCase):
         work = Work(
             user_id=user.id
         )
-        work.versions[0].data['title'] = "Test"
+        work.title = "Test"
         db.session.add(work)
         db.session.commit()
-        new_version = work.new_version()
-        self.assertEqual(work.versions[0].data['title'], new_version.data['title'])
-        self.assertEqual(work.newest_version, 2, new_version.number)
+        work.new_version()
+        self.assertEqual(work.newest_version, 2)
 
 
 if __name__ == '__main__':
