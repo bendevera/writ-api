@@ -95,10 +95,10 @@ class UserAPI(MethodView):
     """
     def get(self):
         # get the auth token
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.args.get('token')
         if auth_header:
             try:
-                auth_token = auth_header.split(" ")[1]
+                auth_token = auth_header.strip()
             except IndexError:
                 responseObject = {
                     'status': 'fail',

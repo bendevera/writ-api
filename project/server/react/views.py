@@ -13,13 +13,3 @@ def serve(path):
         return send_from_directory(react_blueprint.static_folder, path)
     else:
         return send_from_directory(react_blueprint.static_folder, 'index.html')
-
-
-@react_blueprint.route('/static/<path:path>')
-def static_server(path):
-    path = 'static/' + path
-    print(react_blueprint.static_folder + '/' + path)
-    if path != "" and os.path.exists(react_blueprint.static_folder + '/' + path):
-        return send_from_directory(react_blueprint.static_folder, path)
-    else:
-        return send_from_directory(react_blueprint.static_folder, 'index.html')
