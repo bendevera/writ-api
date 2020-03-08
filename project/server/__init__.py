@@ -22,8 +22,8 @@ db = SQLAlchemy(app)
 
 # from project.server.react.views import react_blueprint
 # app.register_blueprint(react_blueprint)
-import project.server.frontend
 from project.server.auth.views import auth_blueprint
 app.register_blueprint(auth_blueprint)
 from project.server.work.views import work_blueprint
 app.register_blueprint(work_blueprint)
+# import project.server.frontend
