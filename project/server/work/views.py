@@ -1,6 +1,7 @@
 from flask import Blueprint, request, make_response, jsonify
 from flask.views import MethodView
 from functools import wraps
+import datetime
 
 from project.server import bcrypt, db
 from project.server.models import User, Work, Version, BlacklistToken
@@ -65,7 +66,7 @@ class WorksAPI(MethodView):
         user = User.query.filter_by(id=request.user_id).first()
         responseObject = {
             'status': 'success',
-            'data': [work.to_json() for work in user.works]
+            'data': [work.to_json() for work in sorted(user.works, key=lambda x: x.last_updated, reverse=True)]
         }
         return make_response(jsonify(responseObject)), 200
 
@@ -118,6 +119,25 @@ class VersionsAPI(MethodView):
                 'data': 'Failed attempt. Please try again.'
             }
             return make_response(jsonify(responseObject)), 404
+    
+    @login_required
+    def delete(self, work_id):
+        try:
+            work = Work.query.filter_by(user_id=request.user_id, id=work_id).first()
+            db.session.delete(work)
+            db.session.commit()
+            responseObject = {
+                'status': 'success',
+                'data': 'success'
+            }
+            return make_response(jsonify(responseObject)), 200
+        except Exception as e:
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'data': 'Malformed collapse request.'
+            }
+            return make_response(jsonify(responseObject)), 401
 
 
 
@@ -159,6 +179,7 @@ class VersionAPI(MethodView):
                 # DO I SEND THE WORK TITLE EACH TIME OR CREATE 
                 # NEW UPDATE ROUTE FOR WORK TO CHANGE TITLE?
                 work.title = str(payload['title'])
+                work.last_updated = datetime.datetime.now()
                 data = {
                     "text": str(payload['text'])
                 }
@@ -211,7 +232,7 @@ work_blueprint.add_url_rule(
 work_blueprint.add_url_rule(
     '/works/<work_id>/versions',
     view_func=versions_view,
-    methods=['GET', 'POST']
+    methods=['GET', 'POST', 'DELETE']
 )
 work_blueprint.add_url_rule(
     '/works/<work_id>/versions/<version_num>',
