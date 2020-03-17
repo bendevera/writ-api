@@ -4,7 +4,7 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from project.server.config import DevelopmentConfig, ProductionConfig
+from project.server.config import ProductionConfig
 
 
 app = Flask(__name__)
@@ -15,7 +15,8 @@ app_settings = os.getenv(
     'project.server.config.ProductionConfig'
 )
 app.config.from_object(ProductionConfig)
-app.config['STATIC_FOLDER'] = 'build'
+# app.config['STATIC_FOLDER'] = 'build'
+print(ProductionConfig)
 print(app.config['SQLALCHEMY_DATABASE_URI'])
 
 bcrypt = Bcrypt(app)
