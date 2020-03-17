@@ -16,6 +16,7 @@ app_settings = os.getenv(
 )
 app.config.from_object(ProductionConfig)
 app.config['STATIC_FOLDER'] = 'build'
+print(app.config['SQLALCHEMY_DATABASE_URI'])
 
 bcrypt = Bcrypt(app)
 db = SQLAlchemy(app)
